@@ -1,0 +1,80 @@
+1. top 5 IP addresses requests come from:
+
+Result:
+1184 98.126.83.64
+   1 255.75.105.15
+   1 255.208.45.156
+   1 255.187.137.87
+   1 255.158.64.76
+
+Command: cat access.log | awk '{print $3}' | sort | uniq -c | sort -nr | head -5 
+
+awk '{print $3}' - prints the third column of each line
+
+uniq - removes duplicate lines, but -c tells it to count the occurrences of each unique line instead. 
+So, this step counts the number of times each unique appears in the log file.
+
+sort -nr - sorts and reverses the order, showing the most frequent codes first.
+
+head -5: This displays only the first two lines.
+
+
+
+2. number of requests with '500' and '200' HTTP codes:
+
+Result: 
+There are 0 requests with the 500 Status and 1849 with Status 200.
+
+Commands:
+grep ' 500 ' access.log | wc -l
+grep ' 200 ' access.log | wc -l
+
+grep: 
+wc: This stands for "word count"
+-l: This is a flag for wc that tells it to count only the number of lines. 
+
+3. number of requests per minute:
+
+ Result:
+ 802 04/Oct/2023 15:00
+ 801 04/Oct/2023 15:01
+ 778 04/Oct/2023 15:02
+ 800 04/Oct/2023 15:03
+ 808 04/Oct/2023 15:04
+  11 04/Oct/2023 15:05
+
+Command:
+cat access.log | cut -d' ' -f1,2 | cut -d':' -f1,2 | sort | uniq -c
+
+cut: This tool extracts specific fields (columns) from text files based on a delimiter.
+-d' ': This specifies the delimiter as a space character ().
+-f1,2: This tells cut to extract the first two fields (columns) separated by space
+uniq: This tool removes duplicate lines from a sorted file.
+-c: This flag tells uniq to count the occurrences of each unique line instead of just removing them
+
+4. which domain is the most requested one?
+
+Result: 2009 example2.com
+
+Command: 
+cat access.log | awk '{print $5}' | sort | uniq -c | sort -nr | head -2
+
+awk '{print $5}' - prints the fifth column of each line. 
+
+uniq - removes duplicate lines, but -c tells it to count the occurrences of each unique line instead. 
+So, this step counts the number of times each unique appears in the log file.
+
+sort -nr - sorts and reverses the order, showing the most frequent codes first.
+
+head -2: This displays only the first two lines.
+
+
+5. do all the requests to '/page.php' result in '499' code?
+
+Answer: yes
+
+Command:
+grep '/page.php' access.log | grep -v ' 499 '
+
+With this command we can check whether there are any /page.php requests that did NOT face 499 error. 
+There's no result, which mean that all requests to page.php faced 499 error.
