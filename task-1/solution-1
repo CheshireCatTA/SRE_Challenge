@@ -78,3 +78,9 @@ grep '/page.php' access.log | grep -v ' 499 '
 
 With this command we can check whether there are any /page.php requests that did NOT face 499 error. 
 There's no result, which mean that all requests to page.php faced 499 error.
+
+
+
+Question:
+
+The fact that one IP address (98.126.83.64) has made a significantly higher number of requests (1184) compared to others is noteworthy. it could be indicative of malicious activities such as scraping, attempting to exploit vulnerabilities, or DoS attack
