@@ -1,0 +1,66 @@
+Firstly, I applied the original nginx.yaml file to check possible errors:
+
+  $ kubectl apply -f nginx.yaml
+deployment.apps/sretest created
+service/sretest-service created
+
+Apparently, the pod didn't start:
+
+  $ kubectl get pods     
+NAME                      READY   STATUS    RESTARTS   AGE
+sretest-b96b4d467-w52xc   0/1     Pending   0          50s
+
+To check the data, I used "kubectl describe pods" command to list possible warnings:
+
+  $ kubectl describe pods sretest-b96b4d467-w52xc
+
+Events:
+  Type     Reason             Age   From                Message
+  ----     ------             ----  ----                -------
+  Warning  FailedScheduling   36s   default-scheduler   0/7 nodes are available: 7 node(s) didn't match Pod's node affinity/selector. preemption: 0/7 nodes are available: 7 Preemption is not helpful for scheduling..
+  Normal   NotTriggerScaleUp  27s   cluster-autoscaler  pod didn't trigger scale-up: 3 node(s) didn't match Pod's node affinity/selector
+
+The issue was related to Node Affinity so it was decided to comment it from the original code to make sure it works without it.
+
+In addition, the 'app' condition in line 45 was updated to 'sretest' instead of 'sretest-service' as the app is specified as 'sretest'.
+It was located by checking the Endpoint in the service. The result was <none> which indicated that the selector was incorrect:
+
+  $ kubectl describe service sretest-service
+  Name:                     sretest-service
+  Endpoints:                <none>
+
+After applying the changes above to nginx.yaml file, the pod started successfully, endpoint updated accordingly, and no other warnings:
+
+  $ kubectl apply -f nginx.yaml
+deployment.apps/sretest configured
+service/sretest-service configured
+
+  $ kubectl get pods
+NAME                       READY   STATUS    RESTARTS   AGE
+sretest-785f5f4fbb-7454z   1/1     Running   0          3m
+
+Finally, after the curl of the localhost, I received the "Welcome to Nginx" page:
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
