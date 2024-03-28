@@ -5,7 +5,7 @@
 #!/bin/bash
 
 # Define the threshold in seconds
-threshold=5
+threshold=2
 
 # Slack webhook URL and channel to post alerts
 slack_webhook_url="Slack webhook URL"
@@ -26,7 +26,7 @@ while true; do
         if [ -z "$http_status" ] || [ "$http_status" -eq "000" ]; then
             message="Error: Unable to reach $website_url. Please check the connection or the website URL."
             curl -X POST -H 'Content-type: application/json' --data "{\"channel\": \"$slack_channel\", \"text\": \"$message\"}" $slack_webhook_url
-        # Check for HTTP errors (e.g., 4xx and 5xx statuses)
+        # Check for HTTP errors (4xx and 5xx statuses)
         elif [ "$http_status" -ge 400 ]; then
             message="Error: $website_url is facing an error with HTTP status $http_status."
             curl -X POST -H 'Content-type: application/json' --data "{\"channel\": \"$slack_channel\", \"text\": \"$message\"}" $slack_webhook_url
