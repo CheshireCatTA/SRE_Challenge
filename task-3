@@ -1,0 +1,42 @@
+# It was decided to develop a bash script that will send alerts to Slack for the defined URLs in website_list.txt. With such an approach, we can check all desired websites that should be monitored.
+# website_list.txt file should contain the list the URLs we want to monitor, one per line. We can simply update the file when we need to add/remove websites.
+
+  
+#!/bin/bash
+
+# Define the threshold in seconds
+threshold=5
+
+# Slack webhook URL and channel to post alerts
+slack_webhook_url="Slack webhook URL"
+slack_channel="#website-monitoring"
+
+# Path to the file containing website URLs
+url_file="/path/to/website_list.txt"
+
+# Start an infinite loop
+while true; do
+    # Loop through each URL in the website list file
+    while IFS= read -r website_url; do
+        # Use curl to get the HTTP status code and load time
+        response=$(curl -o /dev/null -s -w "%{http_code} %{time_total}\n" "$website_url")
+        read http_status load_time <<<"$response"
+
+        # Check for connection issues (http_status will be empty if the website couldn't be reached)
+        if [ -z "$http_status" ] || [ "$http_status" -eq "000" ]; then
+            message="Error: Unable to reach $website_url. Please check the connection or the website URL."
+            curl -X POST -H 'Content-type: application/json' --data "{\"channel\": \"$slack_channel\", \"text\": \"$message\"}" $slack_webhook_url
+        # Check for HTTP errors (e.g., 4xx and 5xx statuses)
+        elif [ "$http_status" -ge 400 ]; then
+            message="Error: $website_url is facing an error with HTTP status $http_status."
+            curl -X POST -H 'Content-type: application/json' --data "{\"channel\": \"$slack_channel\", \"text\": \"$message\"}" $slack_webhook_url
+        # Check if the load time exceeds the threshold
+        elif (( $(echo "$load_time > $threshold" | bc -l) )); then
+            message="Alert: The load time for $website_url is ${load_time}s, exceeding the threshold of ${threshold}s."
+            curl -X POST -H 'Content-type: application/json' --data "{\"channel\": \"$slack_channel\", \"text\": \"$message\"}" $slack_webhook_url
+        fi
+    done < "$url_file"
+
+    # Wait for 5 min before the next run
+    sleep 300
+done
